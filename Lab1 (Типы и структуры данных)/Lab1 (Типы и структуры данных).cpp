@@ -9,29 +9,33 @@ using namespace std;
 using namespace std::chrono;
 
 // Шаблон функции для проверки ввода с консоли.
-// Функция запрашивает у пользователя ввод по заданной строке prompt, проверяет корректность ввода,
-// очищает поток ввода и возвращает введённое значение.
 template <typename T>
 T getValidatedInput(const string& prompt) {
     T value;
     while (true) {
         cout << prompt;
         if (cin >> value) {
-            // Очищаем буфер ввода до конца строки
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             return value;
         }
         else {
             cout << "Ошибка: неверный ввод. Попробуйте снова.\n";
-            // Сброс ошибки и очистка буфера ввода
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
     }
 }
 
+// Функция для запроса подтверждения (Y/N)
+bool getConfirmation(const string& prompt) {
+    char answer;
+    cout << prompt;
+    cin >> answer;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    return (answer == 'Y' || answer == 'y');
+}
+
 // Функция очистки экрана.
-// Для Windows используется команда "cls", для других ОС – "clear".
 void clear_console() {
 #ifdef _WIN32
     system("cls");
@@ -41,13 +45,10 @@ void clear_console() {
 }
 
 // Функция ввода массива вручную.
-// Пользователь вводит элементы по одному. Отрицательные числа разрешены.
 void input_array(float* arr, int n) {
     cout << "\n=== Ввод элементов массива ===\n";
     for (int i = 0; i < n; i++) {
-        // Выводим номер текущего элемента
         cout << "Элемент [" << i << "]: ";
-        // Ввод элемента; отрицательные значения допустимы
         arr[i] = getValidatedInput<float>("");
     }
 }
@@ -62,57 +63,83 @@ void output_array(float* arr, int n) {
 }
 
 // Реализация линейного поиска.
-// Функция проходит по всему массиву и выводит индексы, где найдено совпадение с target.
-void linear_search(float* arr, int n, float target) {
-    bool found = false;
-    cout << "Найденные позиции: ";
-    for (int i = 0; i < n; i++) {
-        if (arr[i] == target) {
-            cout << i << " ";
-            found = true;
+// Если printPositions == true, выводятся найденные индексы,
+// иначе считается и выводится только количество совпадений.
+void linear_search(float* arr, int n, float target, bool printPositions) {
+    if (printPositions) {
+        bool found = false;
+        cout << "Найденные позиции: ";
+        for (int i = 0; i < n; i++) {
+            if (arr[i] == target) {
+                cout << i << " ";
+                found = true;
+            }
         }
+        if (!found) {
+            cout << "Элемент не найден.";
+        }
+        cout << "\n";
     }
-    if (!found) {
-        cout << "Элемент не найден.";
+    else {
+        int count = 0;
+        for (int i = 0; i < n; i++) {
+            if (arr[i] == target)
+                count++;
+        }
+        if (count > 0)
+            cout << "Элемент " << target << " найден " << count << " раз(а).\n";
+        else
+            cout << "Элемент " << target << " не найден в массиве.\n";
     }
-    cout << "\n";
 }
 
-// Реализация бинарного поиска (итеративная версия).
-// Предполагается, что массив уже отсортирован по возрастанию.
-// Если элемент найден, возвращается его индекс, иначе — -1.
+// Стандартная реализация бинарного поиска (итеративная версия).
 int binary_search(float* arr, int n, float target) {
     int low = 0, high = n - 1;
     while (low <= high) {
         int mid = low + (high - low) / 2;
-        if (arr[mid] == target) {
+        if (arr[mid] == target)
             return mid;
-        }
-        else if (arr[mid] < target) {
+        else if (arr[mid] < target)
             low = mid + 1;
-        }
-        else {
+        else
             high = mid - 1;
-        }
     }
     return -1;
 }
 
-// Реализация пузырьковой сортировки (простой метод).
-// Этот метод сравнивает соседние элементы и меняет их местами, если они идут в неправильном порядке.
+// Функция для подсчёта количества вхождений target в отсортированном массиве,
+// используя бинарный поиск для поиска одного вхождения, а затем расширяя область.
+int binary_search_count(float* arr, int n, float target) {
+    int index = binary_search(arr, n, target);
+    if (index == -1)
+        return 0;
+    int count = 1;
+    int left = index - 1;
+    while (left >= 0 && arr[left] == target) {
+        count++;
+        left--;
+    }
+    int right = index + 1;
+    while (right < n && arr[right] == target) {
+        count++;
+        right++;
+    }
+    return count;
+}
+
+// Функция сортировки методом пузырьковой сортировки.
 void bubble_sort(float* arr, int n) {
     for (int i = 0; i < n - 1; i++) {
         bool swapped = false;
         for (int j = 0; j < n - i - 1; j++) {
             if (arr[j] > arr[j + 1]) {
-                // Меняем элементы местами
                 float temp = arr[j];
                 arr[j] = arr[j + 1];
                 arr[j + 1] = temp;
                 swapped = true;
             }
         }
-        // Если за один проход обменов не произошло, массив уже отсортирован
         if (!swapped)
             break;
     }
@@ -126,10 +153,8 @@ void swap(float& a, float& b) {
 }
 
 // Функция разбиения для быстрой сортировки.
-// Выбирается опорный элемент (pivot), затем элементы массива переставляются так, чтобы все элементы
-// меньше или равные опорному оказались слева, а остальные — справа.
 int partition(float* arr, int low, int high) {
-    float pivot = arr[high]; // Опорный элемент
+    float pivot = arr[high];
     int i = low - 1;
     for (int j = low; j < high; j++) {
         if (arr[j] <= pivot) {
@@ -141,8 +166,7 @@ int partition(float* arr, int low, int high) {
     return i + 1;
 }
 
-// Реализация быстрой сортировки (улучшенный метод).
-// Функция рекурсивно сортирует части массива.
+// Реализация быстрой сортировки.
 void quick_sort(float* arr, int low, int high) {
     if (low < high) {
         int pi = partition(arr, low, high);
@@ -152,7 +176,6 @@ void quick_sort(float* arr, int low, int high) {
 }
 
 // Функция заполнения всего массива случайными числами.
-// Значения генерируются в диапазоне от 0.0 до 100.0 с одним знаком после запятой.
 void random_fill_all(float* arr, int n) {
     for (int i = 0; i < n; i++) {
         arr[i] = (rand() % 1001) / 10.0f;
@@ -161,23 +184,19 @@ void random_fill_all(float* arr, int n) {
 }
 
 // Функция случайного заполнения выбранных позиций в массиве.
-// Реализована с использованием алгоритма Фишера–Йетса для перемешивания индексов.
 void random_fill_positions(float* arr, int n, int positions) {
     if (positions > n)
         positions = n;
-    // Создаем динамический массив индексов от 0 до n-1
     int* indices = new int[n];
     for (int i = 0; i < n; i++) {
         indices[i] = i;
     }
-    // Перемешивание индексов алгоритмом Фишера–Йетса
     for (int i = n - 1; i > 0; i--) {
         int j = rand() % (i + 1);
         int temp = indices[i];
         indices[i] = indices[j];
         indices[j] = temp;
     }
-    // Заполнение выбранных позиций случайными числами
     for (int i = 0; i < positions; i++) {
         int idx = indices[i];
         arr[idx] = (rand() % 1001) / 10.0f;
@@ -188,12 +207,12 @@ void random_fill_positions(float* arr, int n, int positions) {
 
 int main() {
     setlocale(LC_ALL, "Rus");
-    srand(static_cast<unsigned int>(time(NULL))); // Инициализация генератора случайных чисел
+    srand(static_cast<unsigned int>(time(NULL)));
 
-    int arr_size = 0;        // Размер массива
-    float* arr = nullptr;    // Указатель на динамический массив
-    bool arrayInitialized = false; // Флаг, указывающий, создан ли массив
-    int choice = 0;          // Переменная для выбора пункта меню
+    int arr_size = 0;
+    float* arr = nullptr;
+    bool arrayInitialized = false;
+    int choice = 0;
 
     do {
         clear_console();
@@ -213,8 +232,6 @@ int main() {
         }
         switch (choice) {
         case 1: {
-            // Ввод нового массива.
-            // Размер массива должен быть положительным числом. Если введено 0, операция отменяется.
             int size = getValidatedInput<int>("\nВведите размер массива (или 0 для отмены): ");
             if (size == 0) {
                 cout << "Операция отменена.\n";
@@ -224,13 +241,11 @@ int main() {
                 cout << "Размер массива должен быть положительным.\n";
                 break;
             }
-            // Если массив уже создан, освобождаем ранее выделенную память
             if (arr != nullptr) {
                 delete[] arr;
             }
             arr_size = size;
             arr = new float[arr_size];
-            // Выбор заполнения массива: случайными числами или ручной ввод.
             char randomChoice = getValidatedInput<char>("\nЗаполнить массив случайными числами? (Y/N, 0 для отмены): ");
             if (randomChoice == '0') {
                 cout << "Операция отменена.\n";
@@ -246,18 +261,26 @@ int main() {
             break;
         }
         case 2: {
-            // Вывод массива на экран.
             if (!arrayInitialized) {
                 cout << "\nМассив не введён. Сначала введите массив (пункт 1 меню).\n";
             }
             else {
-                output_array(arr, arr_size);
+                if (arr_size > 10000) {
+                    if (getConfirmation("Вы точно уверены, что хотите вывести текущий массив? (Y/N): ")) {
+                        output_array(arr, arr_size);
+                    }
+                    else {
+                        cout << "Вывод массива отменён.\n";
+                    }
+                }
+                else {
+                    output_array(arr, arr_size);
+                }
             }
             system("pause");
             break;
         }
         case 3: {
-            // Линейный поиск.
             if (!arrayInitialized) {
                 cout << "\nМассив не введён. Сначала введите массив (пункт 1 меню).\n";
                 system("pause");
@@ -268,9 +291,14 @@ int main() {
                 cout << "Операция отменена.\n";
                 break;
             }
-            // Измерение времени выполнения линейного поиска.
+            bool printPositions = true;
+            // Если массив большой, запрашиваем выбор пользователя:
+            if (arr_size > 10000) {
+                // Если ответ "Yes" - выводим позиции, иначе – только количество совпадений.
+                printPositions = getConfirmation("\nВы точно уверены что хотите провести поиск? Результат может долго печататься (Y/N): ");
+            }
             auto start = high_resolution_clock::now();
-            linear_search(arr, arr_size, target);
+            linear_search(arr, arr_size, target, printPositions);
             auto end = high_resolution_clock::now();
             auto duration = duration_cast<microseconds>(end - start).count();
             float duration_ms = duration / 1000.0f;
@@ -279,7 +307,6 @@ int main() {
             break;
         }
         case 4: {
-            // Сортировка массива методом пузырьковой сортировки.
             if (!arrayInitialized) {
                 cout << "\nМассив не введён. Сначала введите массив (пункт 1 меню).\n";
             }
@@ -296,7 +323,6 @@ int main() {
             break;
         }
         case 5: {
-            // Сортировка массива методом быстрой сортировки.
             if (!arrayInitialized) {
                 cout << "\nМассив не введён. Сначала введите массив (пункт 1 меню).\n";
             }
@@ -313,7 +339,6 @@ int main() {
             break;
         }
         case 6: {
-            // Бинарный поиск. Массив должен быть отсортирован по возрастанию.
             if (!arrayInitialized) {
                 cout << "\nМассив не введён. Сначала введите массив (пункт 1 меню).\n";
                 system("pause");
@@ -325,23 +350,39 @@ int main() {
                 break;
             }
             cout << "\nПредполагается, что массив отсортирован по возрастанию.\n";
+            bool printPosition = true;
+            if (arr_size > 10000) {
+                printPosition = getConfirmation("\nВы точно уверены что хотите провести поиск? Результат может долго печататься (Y/N): ");
+            }
             auto start = high_resolution_clock::now();
-            int index = binary_search(arr, arr_size, target);
-            auto end = high_resolution_clock::now();
-            auto duration = duration_cast<microseconds>(end - start).count();
-            float duration_ms = duration / 1000.0f;
-            if (index != -1) {
-                cout << "Элемент " << target << " найден на позиции " << index << ".\n";
+            if (printPosition) {
+                int index = binary_search(arr, arr_size, target);
+                auto end = high_resolution_clock::now();
+                if (index != -1) {
+                    cout << "Элемент " << target << " найден на позиции " << index << ".\n";
+                }
+                else {
+                    cout << "Элемент " << target << " не найден в массиве.\n";
+                }
+                auto duration = duration_cast<microseconds>(end - start).count();
+                float duration_ms = duration / 1000.0f;
+                cout << "\nВремя выполнения бинарного поиска: " << duration << " мкс (" << duration_ms << " мс)\n";
             }
             else {
-                cout << "Элемент " << target << " не найден в массиве.\n";
+                int count = binary_search_count(arr, arr_size, target);
+                auto end = high_resolution_clock::now();
+                if (count > 0)
+                    cout << "Элемент " << target << " найден " << count << " раз(а).\n";
+                else
+                    cout << "Элемент " << target << " не найден в массиве.\n";
+                auto duration = duration_cast<microseconds>(end - start).count();
+                float duration_ms = duration / 1000.0f;
+                cout << "\nВремя выполнения бинарного поиска: " << duration << " мкс (" << duration_ms << " мс)\n";
             }
-            cout << "\nВремя выполнения бинарного поиска: " << duration << " мкс (" << duration_ms << " мс)\n";
             system("pause");
             break;
         }
         case 7: {
-            // Случайное заполнение выбранных позиций.
             if (!arrayInitialized) {
                 cout << "\nМассив не введён. Сначала создайте массив (пункт 1 меню).\n";
                 system("pause");
@@ -371,7 +412,6 @@ int main() {
         }
     } while (choice != 8);
 
-    // Освобождаем выделенную память, если массив был создан
     if (arr != nullptr)
         delete[] arr;
 
