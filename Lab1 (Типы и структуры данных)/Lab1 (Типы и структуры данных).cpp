@@ -384,6 +384,7 @@ vector<int> linear_search_all(const vector<double>& arr, double target) {
         }
     }
     return indices;
+
 }
 
 //------------------------------------------------------------------------------
