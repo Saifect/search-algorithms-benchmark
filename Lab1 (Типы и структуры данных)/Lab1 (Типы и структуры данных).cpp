@@ -4,6 +4,7 @@
 #include <ctime>
 #include <chrono>
 #include <string>
+#include <cmath>    // Для log2
 
 using namespace std;
 using namespace std::chrono;
@@ -145,35 +146,98 @@ void bubble_sort(float* arr, int n) {
     }
 }
 
-// Функция для обмена двух значений (используется в быстрой сортировке).
+// Функция для обмена двух значений (используется в сортировках).
 void swap(float& a, float& b) {
     float temp = a;
     a = b;
     b = temp;
 }
 
-// Функция разбиения для быстрой сортировки.
-int partition(float* arr, int low, int high) {
-    float pivot = arr[high];
-    int i = low - 1;
-    for (int j = low; j < high; j++) {
-        if (arr[j] <= pivot) {
-            i++;
-            swap(arr[i], arr[j]);
+/* ========= Интроспективная сортировка (Introsort) ========= */
+
+// Сортировка вставками для небольших отрезков.
+void insertion_sort(float* arr, int low, int high) {
+    for (int i = low + 1; i <= high; i++) {
+        float key = arr[i];
+        int j = i - 1;
+        while (j >= low && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
         }
+        arr[j + 1] = key;
     }
-    swap(arr[i + 1], arr[high]);
-    return i + 1;
 }
 
-// Реализация быстрой сортировки.
-void quick_sort(float* arr, int low, int high) {
-    if (low < high) {
-        int pi = partition(arr, low, high);
-        quick_sort(arr, low, pi - 1);
-        quick_sort(arr, pi + 1, high);
+// Функция "heapify" для сортировки кучей (heapsort) в подмассиве [low; high].
+void heapify(float* arr, int n, int i, int low) {
+    int largest = i;
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+    if (left < n && arr[low + left] > arr[low + largest])
+        largest = left;
+    if (right < n && arr[low + right] > arr[low + largest])
+        largest = right;
+    if (largest != i) {
+        swap(arr[low + i], arr[low + largest]);
+        heapify(arr, n, largest, low);
     }
 }
+
+// Сортировка кучей (heapsort) для подмассива [low; high].
+void heapsort(float* arr, int low, int high) {
+    int n = high - low + 1;
+    for (int i = n / 2 - 1; i >= 0; i--) {
+        heapify(arr, n, i, low);
+    }
+    for (int i = n - 1; i > 0; i--) {
+        swap(arr[low], arr[low + i]);
+        heapify(arr, i, 0, low);
+    }
+}
+
+// Рекурсивная функция интроспективной сортировки.
+// При достижении заданного предела глубины переключается на heapsort.
+void introsort_util(float* arr, int low, int high, int depthLimit) {
+    int n = high - low + 1;
+    if (n < 16) {
+        insertion_sort(arr, low, high);
+        return;
+    }
+    if (depthLimit == 0) {
+        heapsort(arr, low, high);
+        return;
+    }
+    // Медиана трёх: выбираем опорный элемент.
+    int mid = low + (high - low) / 2;
+    if (arr[mid] < arr[low])
+        swap(arr[mid], arr[low]);
+    if (arr[high] < arr[low])
+        swap(arr[high], arr[low]);
+    if (arr[high] < arr[mid])
+        swap(arr[high], arr[mid]);
+    // Перемещаем медиану в предпоследнюю позицию.
+    swap(arr[mid], arr[high - 1]);
+    float pivot = arr[high - 1];
+    int i = low, j = high - 1;
+    while (true) {
+        while (arr[++i] < pivot) {}
+        while (arr[--j] > pivot) {}
+        if (i >= j)
+            break;
+        swap(arr[i], arr[j]);
+    }
+    swap(arr[i], arr[high - 1]); // Восстанавливаем опорный элемент
+    introsort_util(arr, low, i - 1, depthLimit - 1);
+    introsort_util(arr, i + 1, high, depthLimit - 1);
+}
+
+// Обёртка для интроспективной сортировки.
+void introsort(float* arr, int n) {
+    int depthLimit = 2 * (int)log2(n);
+    introsort_util(arr, 0, n - 1, depthLimit);
+}
+
+/* ========= Конец интроспективной сортировки ========= */
 
 // Функция заполнения всего массива случайными числами.
 void random_fill_all(float* arr, int n) {
@@ -221,7 +285,7 @@ int main() {
         cout << "2. Вывести текущий массив\n";
         cout << "3. Линейный поиск (неотсортированный массив)\n";
         cout << "4. Сортировка массива методом пузырьковой сортировки (простой метод)\n";
-        cout << "5. Сортировка массива методом быстрой сортировки (улучшенный метод)\n";
+        cout << "5. Сортировка массива методом интроспективной сортировки (быстрая сортировка)\n";
         cout << "6. Бинарный поиск (на отсортированном массиве)\n";
         cout << "7. Случайное заполнение массива выбранных позиций\n";
         cout << "8. Выход\n";
@@ -292,9 +356,7 @@ int main() {
                 break;
             }
             bool printPositions = true;
-            // Если массив большой, запрашиваем выбор пользователя:
             if (arr_size > 10000) {
-                // Если ответ "Yes" - выводим позиции, иначе – только количество совпадений.
                 printPositions = getConfirmation("\nВы точно уверены что хотите провести поиск? Результат может долго печататься (Y/N): ");
             }
             auto start = high_resolution_clock::now();
@@ -328,11 +390,11 @@ int main() {
             }
             else {
                 auto start = high_resolution_clock::now();
-                quick_sort(arr, 0, arr_size - 1);
+                introsort(arr, arr_size);
                 auto end = high_resolution_clock::now();
                 auto duration = duration_cast<microseconds>(end - start).count();
                 float duration_ms = duration / 1000.0f;
-                cout << "\nМассив отсортирован методом быстрой сортировки.\n";
+                cout << "\nМассив отсортирован методом интроспективной сортировки.\n";
                 cout << "Время сортировки: " << duration << " мкс (" << duration_ms << " мс)\n";
             }
             system("pause");
