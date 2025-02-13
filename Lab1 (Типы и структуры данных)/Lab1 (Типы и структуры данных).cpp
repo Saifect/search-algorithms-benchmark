@@ -30,20 +30,20 @@ T getValidatedInput(const string& prompt) {
 
 // Прототипы функций
 void clear_console();
-void input_vector(vector<double>& arr);
-void output_vector(const vector<double>& arr);
-vector<int> linear_search_all(const vector<double>& arr, double target);
-vector<int> binary_search_all(const vector<double>& arr, double target);
-void random_fill_positions(vector<double>& arr);
-void random_fill_all(vector<double>& arr);  // Функция для полного случайного заполнения
+void input_vector(vector<float>& arr);
+void output_vector(const vector<float>& arr);
+vector<int> linear_search_all(const vector<float>& arr, float target);
+vector<int> binary_search_all(const vector<float>& arr, float target);
+void random_fill_positions(vector<float>& arr);
+void random_fill_all(vector<float>& arr);  // Функция для полного случайного заполнения
 
 int main() {
     setlocale(LC_ALL, "Rus");
 
     int arr_size = 0;
-    vector<double> arr;              // Используем double для большей точности
-    bool vectorInitialized = false;  // Флаг, показывающий, введён ли массив
-    int choice = 0;                  // Выбор пользователя в меню
+    vector<float> arr;              // Используем float вместо double
+    bool vectorInitialized = false; // Флаг, показывающий, введён ли массив
+    int choice = 0;                 // Выбор пользователя в меню
 
     // Основной цикл меню
     do {
@@ -149,7 +149,7 @@ int main() {
                 system("pause");
                 break;
             }
-            double search_value = getValidatedInput<double>(
+            float search_value = getValidatedInput<float>(
                 "\nВведите значение для линейного поиска (или 0 для отмены): ");
             if (search_value == 0) {
                 cout << "Операция отменена.\n";
@@ -159,7 +159,7 @@ int main() {
             vector<int> indices = linear_search_all(arr, search_value);
             auto end = high_resolution_clock::now();
             auto duration = duration_cast<microseconds>(end - start).count();
-            double duration_ms = duration / 1000.0;
+            float duration_ms = duration / 1000.0f;
 
             if (!indices.empty()) {
                 // Если массив очень большой, спрашиваем, выводить ли все найденные позиции
@@ -216,7 +216,7 @@ int main() {
                 system("pause");
                 break;
             }
-            double search_value = getValidatedInput<double>(
+            float search_value = getValidatedInput<float>(
                 "\nВведите значение для бинарного поиска (или 0 для отмены): ");
             if (search_value == 0) {
                 cout << "Операция отменена.\n";
@@ -226,7 +226,7 @@ int main() {
             vector<int> indices = binary_search_all(arr, search_value);
             auto end = high_resolution_clock::now();
             auto duration = duration_cast<microseconds>(end - start).count();
-            double duration_ms = duration / 1000.0;
+            float duration_ms = duration / 1000.0f;
 
             if (!indices.empty()) {
                 if (arr.size() > 1000000) {
@@ -289,11 +289,11 @@ int main() {
             mt19937 g(rd());
             shuffle(indices.begin(), indices.end(), g);
             // Генерируем числа с одним знаком после запятой:
-            // Генерируем целое число от 0 до 1000 и делим на 10.0.
+            // Генерируем целое число от 0 до 1000 и делим на 10.0f.
             uniform_int_distribution<int> dist(0, 1000);
             for (int i = 0; i < n; i++) {
                 int idx = indices[i];
-                arr[idx] = dist(g) / 10.0;
+                arr[idx] = dist(g) / 10.0f;
             }
             cout << "Случайное заполнение выполнено для " << n << " позиций." << endl;
             system("pause");
@@ -328,7 +328,7 @@ void clear_console() {
 //------------------------------------------------------------------------------
 // Функция ввода элементов вектора (горизонтальный ввод)
 //------------------------------------------------------------------------------
-void input_vector(vector<double>& arr) {
+void input_vector(vector<float>& arr) {
     bool valid = false;
     while (!valid) {
         cout << "\n=== Ввод элементов массива ===\n";
@@ -345,8 +345,8 @@ void input_vector(vector<double>& arr) {
         }
 
         istringstream iss(line);
-        vector<double> temp;
-        double value;
+        vector<float> temp;
+        float value;
         while (iss >> value) {
             temp.push_back(value);
         }
@@ -366,8 +366,8 @@ void input_vector(vector<double>& arr) {
 //------------------------------------------------------------------------------
 // Функция вывода элементов вектора
 //------------------------------------------------------------------------------
-void output_vector(const vector<double>& arr) {
-    for (double num : arr) {
+void output_vector(const vector<float>& arr) {
+    for (float num : arr) {
         cout << num << " ";
     }
     cout << endl;
@@ -376,7 +376,7 @@ void output_vector(const vector<double>& arr) {
 //------------------------------------------------------------------------------
 // Функция линейного поиска всех вхождений элемента в неотсортированном векторе
 //------------------------------------------------------------------------------
-vector<int> linear_search_all(const vector<double>& arr, double target) {
+vector<int> linear_search_all(const vector<float>& arr, float target) {
     vector<int> indices;
     for (size_t i = 0; i < arr.size(); i++) {
         if (arr[i] == target) {
@@ -384,13 +384,12 @@ vector<int> linear_search_all(const vector<double>& arr, double target) {
         }
     }
     return indices;
-
 }
 
 //------------------------------------------------------------------------------
 // Функция бинарного поиска всех вхождений элемента в отсортированном векторе
 //------------------------------------------------------------------------------
-vector<int> binary_search_all(const vector<double>& arr, double target) {
+vector<int> binary_search_all(const vector<float>& arr, float target) {
     vector<int> indices;
     auto range = equal_range(arr.begin(), arr.end(), target);
     for (auto it = range.first; it != range.second; ++it) {
@@ -402,7 +401,7 @@ vector<int> binary_search_all(const vector<double>& arr, double target) {
 //------------------------------------------------------------------------------
 // Функция случайного заполнения массива выбранных позиций случайными значениями
 //------------------------------------------------------------------------------
-void random_fill_positions(vector<double>& arr) {
+void random_fill_positions(vector<float>& arr) {
     if (arr.empty()) {
         cout << "Массив не создан. Сначала создайте массив (пункт 1 меню).\n";
         return;
@@ -426,11 +425,11 @@ void random_fill_positions(vector<double>& arr) {
     mt19937 g(rd());
     shuffle(indices.begin(), indices.end(), g);
     // Генерируем числа с одним знаком после запятой:
-    // Генерируем целое число от 0 до 1000 и делим на 10.0.
+    // Генерируем целое число от 0 до 1000 и делим на 10.0f.
     uniform_int_distribution<int> dist(0, 1000);
     for (int i = 0; i < n; i++) {
         int idx = indices[i];
-        arr[idx] = dist(g) / 10.0;
+        arr[idx] = dist(g) / 10.0f;
     }
     cout << "Случайное заполнение выполнено для " << n << " позиций." << endl;
 }
@@ -438,7 +437,7 @@ void random_fill_positions(vector<double>& arr) {
 //------------------------------------------------------------------------------
 // Функция случайного заполнения всего массива случайными значениями
 //------------------------------------------------------------------------------
-void random_fill_all(vector<double>& arr) {
+void random_fill_all(vector<float>& arr) {
     if (arr.empty()) {
         cout << "Массив не создан. Сначала создайте массив (пункт 1 меню).\n";
         return;
@@ -447,7 +446,7 @@ void random_fill_all(vector<double>& arr) {
     mt19937 g(rd());
     uniform_int_distribution<int> dist(0, 1000);
     for (size_t i = 0; i < arr.size(); i++) {
-        arr[i] = dist(g) / 10.0;
+        arr[i] = dist(g) / 10.0f;
     }
     cout << "Массив заполнен случайными числами с одним знаком после запятой." << endl;
 }
