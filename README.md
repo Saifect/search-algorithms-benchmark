@@ -19,7 +19,16 @@
 
 🛠 Используемые технологии
 Язык: C++
-Библиотеки: <vector>, <algorithm>, <chrono>, <random>
+Библиотеки: 
+#include <iostream>
+#include <vector>
+#include <algorithm>    // Для std::sort, std::equal_range и std::shuffle
+#include <cstdlib>      // Для system()
+#include <limits>       // Для numeric_limits
+#include <sstream>      // Для istringstream (парсинг строки)
+#include <chrono>       // Для измерения времени
+#include <random>       // Для случайного заполнения
+#include <ctime>
 
 📝 Лицензия
 MIT License – свободное использование и модификация кода.
