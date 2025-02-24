@@ -15,7 +15,7 @@
 ## 🚀 Установка и запуск
 1. **Клонировать репозиторий:**
    ```sh
-   git clone https://github.com/username/search-algorithms-benchmark.git
+   git clone https://github.com/Saifect/search-algorithms-benchmark.git
 
 🛠 Используемые технологии
 Язык: C++
